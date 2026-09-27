@@ -1,0 +1,59 @@
+name: 'NuGetGuard'
+description: 'Scan .NET NuGet dependencies for known vulnerabilities, typosquatted package names, license changes, and outdated versions.'
+author: 'Suraj V Ghorpade'
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  project-path:
+    description: 'Path to the project or solution directory to scan'
+    required: false
+    default: '.'
+  format:
+    description: 'Output format: console, json, or sarif'
+    required: false
+    default: 'sarif'
+  output:
+    description: 'File path to write the report to'
+    required: false
+    default: 'nugetguard-results.sarif'
+  fail-on:
+    description: 'Severity threshold that fails the action: None, Low, Moderate, High, Critical'
+    required: false
+    default: 'High'
+  no-typosquat:
+    description: 'Skip typosquat detection'
+    required: false
+    default: 'false'
+  no-license-check:
+    description: 'Skip license change detection'
+    required: false
+    default: 'false'
+  no-version-check:
+    description: 'Skip outdated version detection'
+    required: false
+    default: 'false'
+
+outputs:
+  report-path:
+    description: 'Path to the generated report file'
+    value: ${{ steps.scan.outputs.report-path }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install NuGetGuard
+      shell: bash
+      run: dotnet tool install --global NuGetGuard.Cli
+
+    - name: Run NuGetGuard scan
+      id: scan
+      shell: bash
+      run: |
+        ARGS=(scan "${{ inputs.project-path }}" --format "${{ inputs.format }}" --output "${{ inputs.output }}" --fail-on "${{ inputs.fail-on }}")
+        if [ "${{ inputs.no-typosquat }}" = "true" ]; then ARGS+=(--no-typosquat); fi
+        if [ "${{ inputs.no-license-check }}" = "true" ]; then ARGS+=(--no-license-check); fi
+        if [ "${{ inputs.no-version-check }}" = "true" ]; then ARGS+=(--no-version-check); fi
+        nugetguard "${ARGS[@]}"
+        echo "report-path=${{ inputs.output }}" >> "$GITHUB_OUTPUT"

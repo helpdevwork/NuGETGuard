@@ -79,6 +79,26 @@ nugetguard init
 
 ### GitHub Actions
 
+Use the [NuGetGuard Action](https://github.com/marketplace/actions/nugetguard) directly:
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+  - uses: actions/setup-dotnet@v4
+    with:
+      dotnet-version: "10.0.x"
+  - uses: helpdevwork/NuGETGuard@v0.3.0
+    id: nugetguard
+    with:
+      fail-on: "High"
+  - uses: github/codeql-action/upload-sarif@v3
+    if: always()
+    with:
+      sarif_file: ${{ steps.nugetguard.outputs.report-path }}
+```
+
+Or install the CLI manually for more control:
+
 ```yaml
 steps:
   - uses: actions/checkout@v4
@@ -103,6 +123,7 @@ See the [Documentation](Documentation/) folder for detailed guides:
 - [Installation & CLI Usage](Documentation/01-Installation-and-CLI-Usage.md)
 - [MSBuild Task Integration](Documentation/02-MSBuild-Task-Integration.md)
 - [CI/CD Integration](Documentation/03-CICD-Integration.md)
+- [NuGetGuard vs. Alternatives](Documentation/04-Comparison-vs-Alternatives.md)
 
 ## License
 

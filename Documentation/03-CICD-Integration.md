@@ -4,6 +4,48 @@ Run NuGetGuard as a dedicated pipeline step to catch dependency risks on every p
 
 ## GitHub Actions
 
+### Using the NuGetGuard Action (recommended)
+
+NuGetGuard ships as a reusable [GitHub Action](https://github.com/marketplace/actions/nugetguard), so you don't need to manually install the CLI or wire up SARIF upload yourself:
+
+```yaml
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  nugetguard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - uses: helpdevwork/NuGETGuard@v0.3.0
+        id: nugetguard
+        with:
+          project-path: "."
+          fail-on: "High"
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: ${{ steps.nugetguard.outputs.report-path }}
+```
+
+| Input | Default | Description |
+|---|---|---|
+| `project-path` | `.` | Directory to scan |
+| `format` | `sarif` | `console`, `json`, or `sarif` |
+| `output` | `nugetguard-results.sarif` | Report file path |
+| `fail-on` | `High` | Severity threshold that fails the step |
+| `no-typosquat` | `false` | Skip typosquat detection |
+| `no-license-check` | `false` | Skip license change detection |
+| `no-version-check` | `false` | Skip outdated version detection |
+
+`if: always()` on the SARIF upload step ensures findings still get uploaded even when the scan step fails the job (since a High+ finding causes a non-zero exit code by default).
+
+### Manual CLI install (alternative)
+
 ### Basic scan (fail the build on High+ vulnerabilities)
 
 ```yaml
