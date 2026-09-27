@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -19,7 +20,30 @@ jobs:
       - run: dotnet build -c Release --no-restore
       - run: dotnet test -c Release --no-build
       - run: dotnet pack -c Release --no-build -o ./artifacts
-      - run: |
-          dotnet nuget push ./artifacts/*.nupkg \
-            --source https://api.nuget.org/v3/index.json \
-            --skip-duplicate
+
+      - name: Publish to NuGet with Trusted Publishing
+        env:
+          ACTIONS_ID_TOKEN_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
+          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
+        run: |
+          # Get OIDC token
+          OIDC_TOKEN=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=api://AzureADTokenExchange" | jq -r '.value')
+
+          # Exchange OIDC token for NuGet API key
+          API_KEY=$(curl -s -X POST https://api.nuget.org/v3-oidc/request-api-key \
+            -H "Content-Type: application/json" \
+            -d "{\"token\": \"$OIDC_TOKEN\"}" | jq -r '.apiKey // .token // empty')
+
+          if [ -z "$API_KEY" ]; then
+            echo "Failed to obtain API key from NuGet Trusted Publishing"
+            echo "Falling back to direct push..."
+            dotnet nuget push ./artifacts/*.nupkg \
+              --source https://api.nuget.org/v3/index.json \
+              --skip-duplicate
+          else
+            dotnet nuget push ./artifacts/*.nupkg \
+              --api-key "$API_KEY" \
+              --source https://api.nuget.org/v3/index.json \
+              --skip-duplicate
+          fi
