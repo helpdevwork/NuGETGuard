@@ -1,11 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>NuGetGuard.MSBuildTask</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Authors>Suraj V Ghorpade</Authors>
     <Description>MSBuild task that automatically scans NuGet dependencies for vulnerabilities on every build.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

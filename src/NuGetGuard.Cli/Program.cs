@@ -18,7 +18,7 @@ static async Task<int> RunAsync(string[] args)
 
     if (args[0] == "--version")
     {
-        Console.WriteLine("NuGetGuard 0.1.0");
+        Console.WriteLine("NuGetGuard 0.2.0");
         return 0;
     }
 
