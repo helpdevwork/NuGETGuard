@@ -18,7 +18,7 @@ static async Task<int> RunAsync(string[] args)
 
     if (args[0] == "--version")
     {
-        Console.WriteLine("NuGetGuard 0.2.0");
+        Console.WriteLine("NuGetGuard 0.3.0");
         return 0;
     }
 
@@ -131,7 +131,7 @@ static async Task<int> HandleScan(string[] args)
         new CompositePackageResolver(),
         new VulnerabilityScanner(httpClient),
         new TyposquatDetector(),
-        new LicenseChangeDetector(),
+        new LicenseChangeDetector(httpClient),
         new VersionInfoService(httpClient)
     );
 

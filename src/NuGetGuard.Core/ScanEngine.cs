@@ -45,9 +45,9 @@ public class ScanEngine
             ? _typosquatDetector.Detect(packages)
             : (IReadOnlyList<TyposquatFinding>)[];
 
-        var licenseChanges = options.CheckLicenseChanges
-            ? _licenseChangeDetector.Detect(packages)
-            : (IReadOnlyList<LicenseFinding>)[];
+        var licenseTask = options.CheckLicenseChanges
+            ? _licenseChangeDetector.DetectAsync(packages, cancellationToken)
+            : Task.FromResult<IReadOnlyList<LicenseFinding>>([]);
 
         var versionInfoList = new List<VersionFinding>();
         if (options.CheckLatestVersion)
@@ -59,6 +59,7 @@ public class ScanEngine
         }
 
         var vulnerabilities = await vulnTask;
+        var licenseChanges = await licenseTask;
 
         return new ScanResult(
             Packages: packages,

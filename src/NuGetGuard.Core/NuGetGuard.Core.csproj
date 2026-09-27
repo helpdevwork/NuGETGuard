@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>NuGetGuard.Core</PackageId>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Authors>Suraj V Ghorpade</Authors>
     <Description>Core library for NuGetGuard — scans .NET dependencies for vulnerabilities, typosquats, license changes, and outdated versions.</Description>

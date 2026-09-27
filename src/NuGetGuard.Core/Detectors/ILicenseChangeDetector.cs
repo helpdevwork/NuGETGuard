@@ -4,5 +4,5 @@ namespace NuGetGuard.Core.Detectors;
 
 public interface ILicenseChangeDetector
 {
-    IReadOnlyList<LicenseFinding> Detect(IReadOnlyList<PackageReference> packages);
+    Task<IReadOnlyList<LicenseFinding>> DetectAsync(IReadOnlyList<PackageReference> packages, CancellationToken cancellationToken = default);
 }

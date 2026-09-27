@@ -1,102 +1,208 @@
-using System.Reflection;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using NuGetGuard.Core.Models;
 
 namespace NuGetGuard.Core.Detectors;
 
 public class LicenseChangeDetector : ILicenseChangeDetector
 {
-    private readonly List<LicenseChangeEntry> _entries;
+    private readonly HttpClient _httpClient;
+    private string? _registrationBaseUrl;
 
-    public LicenseChangeDetector(string? dataFilePath = null)
+    public LicenseChangeDetector(HttpClient httpClient)
     {
-        _entries = LoadEntries(dataFilePath);
+        _httpClient = httpClient;
     }
 
-    public IReadOnlyList<LicenseFinding> Detect(IReadOnlyList<PackageReference> packages)
+    public async Task<IReadOnlyList<LicenseFinding>> DetectAsync(IReadOnlyList<PackageReference> packages, CancellationToken cancellationToken = default)
     {
         var findings = new List<LicenseFinding>();
+        await EnsureServiceIndexLoaded(cancellationToken);
 
-        foreach (var package in packages)
+        var tasks = packages.Select(p => CheckPackageLicenseAsync(p, cancellationToken));
+        var results = await Task.WhenAll(tasks);
+
+        foreach (var finding in results)
         {
-            var entry = _entries.FirstOrDefault(e =>
-                string.Equals(e.PackageId, package.Id, StringComparison.OrdinalIgnoreCase));
-
-            if (entry is null)
-                continue;
-
-            if (CompareVersions(package.ResolvedVersion, entry.ChangedInVersion) >= 0)
-            {
-                findings.Add(new LicenseFinding(
-                    PackageId: package.Id,
-                    VersionInstalled: package.ResolvedVersion,
-                    ChangedInVersion: entry.ChangedInVersion,
-                    NewLicenseSummary: entry.NewLicense,
-                    SourceUrl: entry.SourceUrl
-                ));
-            }
+            if (finding is not null)
+                findings.Add(finding);
         }
 
         return findings;
     }
 
+    private async Task<LicenseFinding?> CheckPackageLicenseAsync(PackageReference package, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var lowerId = package.Id.ToLowerInvariant();
+            var regUrl = $"{_registrationBaseUrl}{lowerId}/index.json";
+
+            using var response = await _httpClient.GetAsync(regUrl, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+
+            var catalogEntries = ExtractCatalogEntries(doc.RootElement);
+            if (catalogEntries.Count < 2)
+                return null;
+
+            var currentEntry = catalogEntries
+                .FirstOrDefault(e => string.Equals(e.Version, package.ResolvedVersion, StringComparison.OrdinalIgnoreCase));
+
+            if (currentEntry is null)
+                return null;
+
+            var currentLicense = currentEntry.License;
+            if (string.IsNullOrEmpty(currentLicense))
+                return null;
+
+            var previousVersions = catalogEntries
+                .Where(e => CompareVersions(e.Version, package.ResolvedVersion) < 0)
+                .OrderByDescending(e => e.Version, new VersionComparer())
+                .ToList();
+
+            if (previousVersions.Count == 0)
+                return null;
+
+            var previousEntry = previousVersions.First();
+            var previousLicense = previousEntry.License;
+
+            if (string.IsNullOrEmpty(previousLicense))
+                return null;
+
+            if (!string.Equals(currentLicense, previousLicense, StringComparison.OrdinalIgnoreCase))
+            {
+                return new LicenseFinding(
+                    PackageId: package.Id,
+                    VersionInstalled: package.ResolvedVersion,
+                    ChangedInVersion: currentEntry.Version,
+                    NewLicenseSummary: $"{previousLicense} → {currentLicense}",
+                    SourceUrl: $"https://www.nuget.org/packages/{package.Id}/{currentEntry.Version}"
+                );
+            }
+
+            return null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static List<CatalogEntry> ExtractCatalogEntries(JsonElement root)
+    {
+        var entries = new List<CatalogEntry>();
+
+        if (!root.TryGetProperty("items", out var pages))
+            return entries;
+
+        foreach (var page in pages.EnumerateArray())
+        {
+            if (!page.TryGetProperty("items", out var items))
+                continue;
+
+            foreach (var item in items.EnumerateArray())
+            {
+                if (!item.TryGetProperty("catalogEntry", out var catalogEntry))
+                    continue;
+
+                var version = catalogEntry.TryGetProperty("version", out var vProp) ? vProp.GetString() : null;
+                if (string.IsNullOrEmpty(version) || version.Contains('-'))
+                    continue;
+
+                var license = GetLicenseFromEntry(catalogEntry);
+
+                entries.Add(new CatalogEntry(version, license ?? ""));
+            }
+        }
+
+        return entries;
+    }
+
+    private static string? GetLicenseFromEntry(JsonElement entry)
+    {
+        if (entry.TryGetProperty("licenseExpression", out var expr))
+        {
+            var val = expr.GetString();
+            if (!string.IsNullOrEmpty(val))
+                return val;
+        }
+
+        if (entry.TryGetProperty("licenseUrl", out var url))
+        {
+            var val = url.GetString();
+            if (!string.IsNullOrEmpty(val))
+                return SummarizeLicenseUrl(val);
+        }
+
+        return null;
+    }
+
+    private static string SummarizeLicenseUrl(string url)
+    {
+        if (url.Contains("apache", StringComparison.OrdinalIgnoreCase) && url.Contains("2.0", StringComparison.OrdinalIgnoreCase))
+            return "Apache-2.0";
+        if (url.Contains("mit", StringComparison.OrdinalIgnoreCase))
+            return "MIT";
+        if (url.Contains("ms-pl", StringComparison.OrdinalIgnoreCase))
+            return "MS-PL";
+        if (url.Contains("bsd", StringComparison.OrdinalIgnoreCase))
+            return "BSD";
+
+        return url;
+    }
+
     private static int CompareVersions(string v1, string v2)
     {
-        if (Version.TryParse(StripPrerelease(v1), out var ver1) &&
-            Version.TryParse(StripPrerelease(v2), out var ver2))
-        {
+        var dash1 = v1.IndexOf('-');
+        var dash2 = v2.IndexOf('-');
+        var clean1 = dash1 >= 0 ? v1[..dash1] : v1;
+        var clean2 = dash2 >= 0 ? v2[..dash2] : v2;
+
+        if (Version.TryParse(clean1, out var ver1) && Version.TryParse(clean2, out var ver2))
             return ver1.CompareTo(ver2);
-        }
 
         return string.Compare(v1, v2, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string StripPrerelease(string version)
+    private async Task EnsureServiceIndexLoaded(CancellationToken cancellationToken)
     {
-        var dashIndex = version.IndexOf('-');
-        return dashIndex >= 0 ? version[..dashIndex] : version;
-    }
+        if (_registrationBaseUrl is not null)
+            return;
 
-    private static List<LicenseChangeEntry> LoadEntries(string? dataFilePath)
-    {
-        string jsonContent;
+        using var response = await _httpClient.GetAsync("https://api.nuget.org/v3/index.json", cancellationToken);
+        response.EnsureSuccessStatusCode();
 
-        if (dataFilePath is not null && File.Exists(dataFilePath))
+        using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+
+        foreach (var resource in doc.RootElement.GetProperty("resources").EnumerateArray())
         {
-            jsonContent = File.ReadAllText(dataFilePath);
-        }
-        else
-        {
-            var assembly = Assembly.GetExecutingAssembly();
-            var resourceName = assembly.GetManifestResourceNames()
-                .FirstOrDefault(n => n.EndsWith("license-changed.json"));
-
-            if (resourceName is null)
-                return [];
-
-            using var stream = assembly.GetManifestResourceStream(resourceName)!;
-            using var reader = new StreamReader(stream);
-            jsonContent = reader.ReadToEnd();
+            var type = resource.GetProperty("@type").GetString();
+            if (type is "RegistrationsBaseUrl/3.6.0" or "RegistrationsBaseUrl")
+            {
+                _registrationBaseUrl = resource.GetProperty("@id").GetString()!;
+                if (!_registrationBaseUrl.EndsWith('/'))
+                    _registrationBaseUrl += '/';
+                return;
+            }
         }
 
-        return JsonSerializer.Deserialize<List<LicenseChangeEntry>>(jsonContent,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];
+        _registrationBaseUrl = "https://api.nuget.org/v3/registration5-gz-semver2/";
     }
 
-    private class LicenseChangeEntry
+    private record CatalogEntry(string Version, string License);
+
+    private class VersionComparer : IComparer<string>
     {
-        [JsonPropertyName("packageId")]
-        public string PackageId { get; set; } = "";
-        [JsonPropertyName("changedInVersion")]
-        public string ChangedInVersion { get; set; } = "";
-        [JsonPropertyName("previousLicense")]
-        public string PreviousLicense { get; set; } = "";
-        [JsonPropertyName("newLicense")]
-        public string NewLicense { get; set; } = "";
-        [JsonPropertyName("sourceUrl")]
-        public string SourceUrl { get; set; } = "";
-        [JsonPropertyName("notes")]
-        public string? Notes { get; set; }
+        public int Compare(string? x, string? y)
+        {
+            if (x is null && y is null) return 0;
+            if (x is null) return -1;
+            if (y is null) return 1;
+            return CompareVersions(x, y);
+        }
     }
 }

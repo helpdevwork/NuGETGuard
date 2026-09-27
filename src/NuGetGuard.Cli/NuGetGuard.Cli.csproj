@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>NuGetGuard.Cli</PackageId>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Authors>Suraj V Ghorpade</Authors>
     <Description>Scans .NET project dependencies for known vulnerabilities, typosquats, license changes, and outdated versions — at build time, before they become a problem.</Description>

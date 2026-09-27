@@ -50,13 +50,13 @@ public class NuGetGuardBuildTask : Microsoft.Build.Utilities.Task
     private async Task<Core.Models.ScanResult> RunScan()
     {
         var httpClient = new HttpClient();
-        httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("NuGetGuard/0.1.0");
+        httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("NuGetGuard/0.2.0");
 
         var engine = new Core.ScanEngine(
             new Core.Resolvers.CompositePackageResolver(),
             new Core.Detectors.VulnerabilityScanner(httpClient),
             new Core.Detectors.TyposquatDetector(),
-            new Core.Detectors.LicenseChangeDetector(),
+            new Core.Detectors.LicenseChangeDetector(httpClient),
             new Core.VersionInfo.VersionInfoService(httpClient)
         );
 
