@@ -26,7 +26,6 @@
 
   <ItemGroup>
     <EmbeddedResource Include="..\..\data\popular-packages.json" Link="Data\popular-packages.json" />
-    <EmbeddedResource Include="..\..\data\license-changed.json" Link="Data\license-changed.json" />
   </ItemGroup>
 
 </Project>

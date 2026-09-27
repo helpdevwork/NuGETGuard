@@ -18,3 +18,8 @@ Thumbs.db
 ## NuGetGuard
 cache.db
 .nugetguard.json
+
+## Internal design docs (kept locally only)
+Documentation/01-High-Level-Design.md
+Documentation/02-Low-Level-Design.md
+Documentation/03-NuGet-Publishing-Guide.md
