@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageId>NuGetGuard.MSBuildTask</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Suraj V Ghorpade</Authors>
+    <Description>MSBuild task that automatically scans NuGet dependencies for vulnerabilities on every build.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>security;nuget;vulnerability;scanner;msbuild</PackageTags>
+    <PackageProjectUrl>https://github.com/helpdevwork/NuGETGuard</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/helpdevwork/NuGETGuard</RepositoryUrl>
+    <DevelopmentDependency>true</DevelopmentDependency>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <NoPackageAnalysis>true</NoPackageAnalysis>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.13.9" PrivateAssets="all" ExcludeAssets="runtime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NuGetGuard.Core\NuGetGuard.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="build\NuGetGuard.targets" Pack="true" PackagePath="build\" />
+  </ItemGroup>
+
+</Project>

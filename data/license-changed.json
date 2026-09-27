@@ -1,0 +1,66 @@
+[
+  {
+    "packageId": "AutoMapper",
+    "changedInVersion": "13.0.0",
+    "previousLicense": "MIT",
+    "newLicense": "Commercial (Eyeconic/Meziantou dual license)",
+    "sourceUrl": "https://github.com/AutoMapper/AutoMapper/blob/main/LICENSE.txt",
+    "notes": "Free for individuals/small teams under a defined revenue threshold; commercial license required above it."
+  },
+  {
+    "packageId": "MediatR",
+    "changedInVersion": "13.0.0",
+    "previousLicense": "Apache-2.0",
+    "newLicense": "Commercial",
+    "sourceUrl": "https://github.com/jbogard/MediatR",
+    "notes": "See publisher licensing page for current terms before relying on this summary."
+  },
+  {
+    "packageId": "MassTransit",
+    "changedInVersion": "8.0.0",
+    "previousLicense": "Apache-2.0",
+    "newLicense": "Commercial (dual license)",
+    "sourceUrl": "https://github.com/MassTransit/MassTransit",
+    "notes": "Community edition remains available; commercial features require a license."
+  },
+  {
+    "packageId": "ImageSharp",
+    "changedInVersion": "2.0.0",
+    "previousLicense": "Apache-2.0",
+    "newLicense": "Six Labors Split License (commercial for revenue > $1M USD)",
+    "sourceUrl": "https://github.com/SixLabors/ImageSharp/blob/main/LICENSE",
+    "notes": "Free for open-source and small businesses; commercial license for larger organizations."
+  },
+  {
+    "packageId": "SixLabors.ImageSharp",
+    "changedInVersion": "2.0.0",
+    "previousLicense": "Apache-2.0",
+    "newLicense": "Six Labors Split License (commercial for revenue > $1M USD)",
+    "sourceUrl": "https://github.com/SixLabors/ImageSharp/blob/main/LICENSE",
+    "notes": "Free for open-source and small businesses; commercial license for larger organizations."
+  },
+  {
+    "packageId": "Moq",
+    "changedInVersion": "4.20.0",
+    "previousLicense": "BSD-3-Clause",
+    "newLicense": "BSD-3-Clause (but bundled SponsorLink telemetry controversy)",
+    "sourceUrl": "https://github.com/moq/moq",
+    "notes": "License itself did not change but version 4.20.0 introduced SponsorLink which collected user data. Reverted in 4.20.2 but trust was damaged — many projects migrated to NSubstitute."
+  },
+  {
+    "packageId": "EPPlus",
+    "changedInVersion": "5.0.0",
+    "previousLicense": "LGPL-2.1",
+    "newLicense": "Polyform Noncommercial 1.0.0 / Commercial",
+    "sourceUrl": "https://www.epplussoftware.com/en/LicenseOverview",
+    "notes": "Free for non-commercial use only; commercial use requires a paid license starting from v5."
+  },
+  {
+    "packageId": "IdentityServer4",
+    "changedInVersion": "4.0.0",
+    "previousLicense": "Apache-2.0",
+    "newLicense": "Duende (commercial)",
+    "sourceUrl": "https://duendesoftware.com/products/identityserver",
+    "notes": "Successor is Duende.IdentityServer which requires a commercial license for production use."
+  }
+]

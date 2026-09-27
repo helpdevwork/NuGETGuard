@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/NuGetGuard.Cli/NuGetGuard.Cli.csproj" />
+    <Project Path="src/NuGetGuard.Core/NuGetGuard.Core.csproj" />
+    <Project Path="src/NuGetGuard.MSBuildTask/NuGetGuard.MSBuildTask.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/NuGetGuard.Core.Tests/NuGetGuard.Core.Tests.csproj" />
+  </Folder>
+</Solution>

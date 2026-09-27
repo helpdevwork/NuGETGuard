@@ -1,0 +1,8 @@
+<Project>
+  <Target Name="NuGetGuardScan" AfterTargets="Restore" Condition="'$(NuGetGuardEnabled)' != 'false'">
+    <NuGetGuardBuildTask
+        ProjectPath="$(MSBuildProjectFullPath)"
+        FailOnSeverity="$(NuGetGuardFailOn)"
+        ContinueOnError="$(NuGetGuardContinueOnError)" />
+  </Target>
+</Project>

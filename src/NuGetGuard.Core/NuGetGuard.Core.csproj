@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageId>NuGetGuard.Core</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Suraj V Ghorpade</Authors>
+    <Description>Core library for NuGetGuard — scans .NET dependencies for vulnerabilities, typosquats, license changes, and outdated versions.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>security;nuget;vulnerability;scanner;supply-chain</PackageTags>
+    <PackageProjectUrl>https://github.com/helpdevwork/NuGETGuard</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/helpdevwork/NuGETGuard</RepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.4" />
+    <PackageReference Include="System.Text.Json" Version="9.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\data\popular-packages.json" Link="Data\popular-packages.json" />
+    <EmbeddedResource Include="..\..\data\license-changed.json" Link="Data\license-changed.json" />
+  </ItemGroup>
+
+</Project>
